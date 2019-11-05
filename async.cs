@@ -28,6 +28,8 @@ should be only limited for event handlers.
 If you run an async method and return a Task.  You can check
 the task (for instance Task<T>) for T.Completed to see if it
 finished.
+
+Finally, if you want the result of the returned Task<T> it's T.Result.
  */
 class Program {
     static void Main() {
@@ -46,6 +48,7 @@ class Program {
             }
             if (a.IsCompleted) {
                 Console.WriteLine("The async method has completed");
+                Console.WriteLine(a.Result);
                 break;
             }
         }
