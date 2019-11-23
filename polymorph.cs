@@ -23,7 +23,7 @@ namespace PolyMorph {
     public interface Iface {
         public void Execute();
     }
-    // Spell class
+    // Spell class implementing Iface
     public class Spell : Iface {
         string spellText = "You cast a spell!";
         public Spell() { }
@@ -32,7 +32,7 @@ namespace PolyMorph {
             Console.WriteLine(spellText);
         }
     }
-    // Melee class
+    // Melee class implementing Iface
     public class Melee : Iface {
         string meleeText = "You swing your axe!";
         public Melee() { }
