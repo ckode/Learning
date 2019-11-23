@@ -40,7 +40,7 @@ namespace AsyncServer {
          * class AsyncSocketListner
          * 
          */
-        public static ManualResetEvent allDone = new ManualResetEvent(false);
+        public static AutoResetEvent allDone = new AutoResetEvent(false);
         public AsyncSocketListener() { }
         public List<Client> players = new List<Client>();
         public int ClientCount = 0;
@@ -60,7 +60,7 @@ namespace AsyncServer {
                 listener.Listen(_max_connections);
                 Console.WriteLine("Starting listener...");
                 while (true) {
-                    allDone.Reset();
+                    allDone.Set();
                     listener.BeginAccept(new AsyncCallback(AcceptCallback), listener);
                     allDone.WaitOne();
                 }
@@ -102,22 +102,26 @@ namespace AsyncServer {
             }
         }
 
-        public void Send(Socket handler, String data) {
+        public void Send(Client player, String data) {
             byte[] databytes = Encoding.ASCII.GetBytes(data);
-            handler.BeginSend(databytes, 0, databytes.Length, 0, new AsyncCallback(SendCallback), handler);
+            Socket handler = player.socket;
+            handler.BeginSend(databytes, 0, databytes.Length, 0, new AsyncCallback(SendCallback), player);
+            player.buffer.Clear();
         }
 
         public void SendToAllPlayers(String data) {
             foreach (Client player in players) {
-                Send(player.socket, data);
+                Send(player, data);
             }
         }
-
+		// ISSUES
         private void SendCallback(IAsyncResult AsyncResult) {
             try {
-                Socket handler = (Socket)AsyncResult.AsyncState;
+                Client client = (Client)AsyncResult.AsyncState;
+                Socket handler = client.socket;
                 int bytessent = handler.EndSend(AsyncResult);
                 Console.WriteLine("Sent {0} bytes to client.", bytessent);
+                handler.BeginReceive(client.streambuffer, 0, Client.BufferSize, 0, new AsyncCallback(ReadCallback), client);
             } catch (Exception e) {
                 Console.WriteLine(e.ToString());
             }
