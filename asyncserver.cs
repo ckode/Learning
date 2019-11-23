@@ -45,7 +45,7 @@ namespace AsyncServer {
         public List<Client> players = new List<Client>();
         public int ClientCount = 0;
         
-		// static
+
 		public void StartListening(IPAddress ip, int port, int max_conns) { 
             byte[] bytes = new byte[1024];
             IPAddress _ip = ip;
@@ -68,7 +68,7 @@ namespace AsyncServer {
                 Console.WriteLine(e.ToString());
             }
         }
-		// static
+
 		public void AcceptCallback(IAsyncResult AsyncResult) {
             allDone.Set();
             Socket listener = (Socket)AsyncResult.AsyncState;
@@ -82,7 +82,7 @@ namespace AsyncServer {
             client.socket = handler;
             handler.BeginReceive(client.streambuffer, 0, Client.BufferSize, 0, new AsyncCallback(ReadCallback), client);
         }
-		//static
+
 		public void ReadCallback(IAsyncResult AsyncResult) {
             String content = String.Empty;
             Client client = (Client)AsyncResult.AsyncState;
@@ -101,18 +101,18 @@ namespace AsyncServer {
                 }
             }
         }
-		//static
+
 		public void Send(Socket handler, String data) {
             byte[] databytes = Encoding.ASCII.GetBytes(data);
             handler.BeginSend(databytes, 0, databytes.Length, 0, new AsyncCallback(SendCallback), handler);
         }
-		// static
+
 		public void SendToAllPlayers(String data) {
 			foreach (Client player in players) {
                 Send(player.socket, data);
             }
         }
-		// static
+
 		private void SendCallback(IAsyncResult AsyncResult) {
 			try {
                 Socket handler = (Socket)AsyncResult.AsyncState;
@@ -122,6 +122,7 @@ namespace AsyncServer {
                 Console.WriteLine(e.ToString());
             }
         }
+
         public static int Main(String[] args) {
             AsyncSocketListener server = new AsyncSocketListener();
 			if(server.players != null) {
