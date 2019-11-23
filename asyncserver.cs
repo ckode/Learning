@@ -17,9 +17,6 @@ namespace AsyncServer {
          * mud server.  Then we can use that object to access this
          * object for sending a recieving to the player.
          * 
-         * Just FYI.  The send and recieve methods are static 
-         * methods and not a part of the actual class object.
-         * 
          * streambuff is the main incoming buffer from the stream
          * limited to 1024 by BufferSize.  The async keeps reading
          * this and applying it to the StringBuilder "buffer"
@@ -32,18 +29,30 @@ namespace AsyncServer {
         public const int BufferSize = 1024;
         public byte[] streambuffer = new byte[BufferSize];
         public StringBuilder buffer = new StringBuilder();
-        public int client_id;
+        public string client_id;
     }
 
     public class AsyncSocketListener {
         /*
          * class AsyncSocketListner
+		 * 
+		 * I've made this class the main server object.
+		 * It holds most of the information and also 
+		 * includes a list connected Client objects
+		 * called players.
          * 
+		 * It currently works, but for some reason
+		 * after a while sitting idle, it stops functioing
+		 * and I end up having to kill it.   Not quite
+		 * clear where it's locking up, but it might 
+		 * help to add a logger and very verbose debug 
+		 * logging to find the issue.
+		 * 
          */
         public static AutoResetEvent allDone = new AutoResetEvent(false);
         public AsyncSocketListener() { }
-        public List<Client> players = new List<Client>();
-        public int ClientCount = 0;
+        public Dictionary<string, Client> players = new Dictionary<string, Client>();
+        public int client_count;
         
 
         public void StartListening(IPAddress ip, int port, int max_conns) { 
@@ -74,12 +83,15 @@ namespace AsyncServer {
             Socket listener = (Socket)AsyncResult.AsyncState;
             Socket handler = listener.EndAccept(AsyncResult);
             Client client = new Client();
-            ClientCount++;
-            client.client_id = ClientCount;
-            Console.WriteLine(String.Format("Assigned {0} to connecting client", ClientCount));
-            players.Add(client);
-            
+            client_count++;
+            client.client_id = handler.RemoteEndPoint.ToString();
             client.socket = handler;
+            Console.WriteLine(String.Format("Client number {0} to connected as {1}", client_count, client.client_id));
+            // the Send below crashes, probably due to it's not a synchronized send?  Not sure.
+			//Send(client, "Welcome to SonzoAsyncServer 0.1");
+            players.Add(client.client_id, client);
+            
+            
             handler.BeginReceive(client.streambuffer, 0, Client.BufferSize, 0, new AsyncCallback(ReadCallback), client);
         }
 
@@ -93,8 +105,8 @@ namespace AsyncServer {
                 client.buffer.Append(Encoding.ASCII.GetString(client.streambuffer, 0, inputbuffer));
                 content = client.buffer.ToString();
                 if (content.IndexOf('\n') > -1) {
-                    Console.WriteLine("Read {0} bytes from socket.\nData: {1}", content.Length, content);
-                    String outstring = String.Format("Client #{0} said, {1}", client.client_id, content);
+                    Console.Write("{0} said: {1}", client.client_id, content);
+                    String outstring = String.Format("User from {0} said, {1}", client.client_id, content);
                     SendToAllPlayers(outstring);
                 } else {
                     handler.BeginReceive(client.streambuffer, 0, Client.BufferSize, 0, new AsyncCallback(ReadCallback), client);
@@ -110,8 +122,8 @@ namespace AsyncServer {
         }
 
         public void SendToAllPlayers(String data) {
-            foreach (Client player in players) {
-                Send(player, data);
+            foreach (KeyValuePair<string, Client> player in players) {
+                Send(player.Value, data);
             }
         }
 		// ISSUES
@@ -120,7 +132,6 @@ namespace AsyncServer {
                 Client client = (Client)AsyncResult.AsyncState;
                 Socket handler = client.socket;
                 int bytessent = handler.EndSend(AsyncResult);
-                Console.WriteLine("Sent {0} bytes to client.", bytessent);
                 handler.BeginReceive(client.streambuffer, 0, Client.BufferSize, 0, new AsyncCallback(ReadCallback), client);
             } catch (Exception e) {
                 Console.WriteLine(e.ToString());
@@ -129,8 +140,8 @@ namespace AsyncServer {
 
         public static int Main(String[] args) {
             AsyncSocketListener server = new AsyncSocketListener();
-            if(server.players != null) {
-                Console.WriteLine("It exists");
+            if(server.players == null) {
+                Console.WriteLine("Failed to create server.");
             }
             server.StartListening(IPAddress.Parse("0.0.0.0"), 23, 10);
             return 0;
