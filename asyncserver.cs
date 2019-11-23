@@ -32,21 +32,21 @@ namespace AsyncServer {
         public const int BufferSize = 1024;
         public byte[] streambuffer = new byte[BufferSize];
         public StringBuilder buffer = new StringBuilder();
-		public int client_id;
+        public int client_id;
     }
 
-	public class AsyncSocketListener {
-		/*
-		 * class AsyncSocketListner
-		 * 
-		 */
+    public class AsyncSocketListener {
+        /*
+         * class AsyncSocketListner
+         * 
+         */
         public static ManualResetEvent allDone = new ManualResetEvent(false);
         public AsyncSocketListener() { }
         public List<Client> players = new List<Client>();
         public int ClientCount = 0;
         
 
-		public void StartListening(IPAddress ip, int port, int max_conns) { 
+        public void StartListening(IPAddress ip, int port, int max_conns) { 
             byte[] bytes = new byte[1024];
             IPAddress _ip = ip;
             int _port = port;
@@ -55,11 +55,11 @@ namespace AsyncServer {
 
             Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-			try {
+            try {
                 listener.Bind(_ep);
                 listener.Listen(_max_connections);
                 Console.WriteLine("Starting listener...");
-				while (true) {
+                while (true) {
                     allDone.Reset();
                     listener.BeginAccept(new AsyncCallback(AcceptCallback), listener);
                     allDone.WaitOne();
@@ -69,7 +69,7 @@ namespace AsyncServer {
             }
         }
 
-		public void AcceptCallback(IAsyncResult AsyncResult) {
+        public void AcceptCallback(IAsyncResult AsyncResult) {
             allDone.Set();
             Socket listener = (Socket)AsyncResult.AsyncState;
             Socket handler = listener.EndAccept(AsyncResult);
@@ -83,13 +83,13 @@ namespace AsyncServer {
             handler.BeginReceive(client.streambuffer, 0, Client.BufferSize, 0, new AsyncCallback(ReadCallback), client);
         }
 
-		public void ReadCallback(IAsyncResult AsyncResult) {
+        public void ReadCallback(IAsyncResult AsyncResult) {
             String content = String.Empty;
             Client client = (Client)AsyncResult.AsyncState;
             Socket handler = client.socket;
             int inputbuffer = handler.EndReceive(AsyncResult);
 
-			if (inputbuffer > 0) {
+            if (inputbuffer > 0) {
                 client.buffer.Append(Encoding.ASCII.GetString(client.streambuffer, 0, inputbuffer));
                 content = client.buffer.ToString();
                 if (content.IndexOf('\n') > -1) {
@@ -102,19 +102,19 @@ namespace AsyncServer {
             }
         }
 
-		public void Send(Socket handler, String data) {
+        public void Send(Socket handler, String data) {
             byte[] databytes = Encoding.ASCII.GetBytes(data);
             handler.BeginSend(databytes, 0, databytes.Length, 0, new AsyncCallback(SendCallback), handler);
         }
 
-		public void SendToAllPlayers(String data) {
-			foreach (Client player in players) {
+        public void SendToAllPlayers(String data) {
+            foreach (Client player in players) {
                 Send(player.socket, data);
             }
         }
 
-		private void SendCallback(IAsyncResult AsyncResult) {
-			try {
+        private void SendCallback(IAsyncResult AsyncResult) {
+            try {
                 Socket handler = (Socket)AsyncResult.AsyncState;
                 int bytessent = handler.EndSend(AsyncResult);
                 Console.WriteLine("Sent {0} bytes to client.", bytessent);
@@ -125,9 +125,9 @@ namespace AsyncServer {
 
         public static int Main(String[] args) {
             AsyncSocketListener server = new AsyncSocketListener();
-			if(server.players != null) {
-				Console.WriteLine("It exists");
-			}
+            if(server.players != null) {
+                Console.WriteLine("It exists");
+            }
             server.StartListening(IPAddress.Parse("0.0.0.0"), 23, 10);
             return 0;
         }
