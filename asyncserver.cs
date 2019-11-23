@@ -35,19 +35,19 @@ namespace AsyncServer {
     public class AsyncSocketListener {
         /*
          * class AsyncSocketListner
-		 * 
-		 * I've made this class the main server object.
-		 * It holds most of the information and also 
-		 * includes a list connected Client objects
-		 * called players.
          * 
-		 * It currently works, but for some reason
-		 * after a while sitting idle, it stops functioing
-		 * and I end up having to kill it.   Not quite
-		 * clear where it's locking up, but it might 
-		 * help to add a logger and very verbose debug 
-		 * logging to find the issue.
-		 * 
+         * I've made this class the main server object.
+         * It holds most of the information and also 
+         * includes a list connected Client objects
+         * called players.
+         * 
+         * It currently works, but for some reason
+         * after a while sitting idle, it stops functioing
+         * and I end up having to kill it.   Not quite
+         * clear where it's locking up, but it might 
+         * help to add a logger and very verbose debug 
+         * logging to find the issue.
+         * 
          */
         public static AutoResetEvent allDone = new AutoResetEvent(false);
         public AsyncSocketListener() { }
@@ -88,7 +88,7 @@ namespace AsyncServer {
             client.socket = handler;
             Console.WriteLine(String.Format("Client number {0} to connected as {1}", client_count, client.client_id));
             // the Send below crashes, probably due to it's not a synchronized send?  Not sure.
-			//Send(client, "Welcome to SonzoAsyncServer 0.1");
+            //Send(client, "Welcome to SonzoAsyncServer 0.1");
             players.Add(client.client_id, client);
             
             
@@ -126,7 +126,7 @@ namespace AsyncServer {
                 Send(player.Value, data);
             }
         }
-		// ISSUES
+        // ISSUES
         private void SendCallback(IAsyncResult AsyncResult) {
             try {
                 Client client = (Client)AsyncResult.AsyncState;
